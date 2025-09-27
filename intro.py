@@ -21,17 +21,18 @@ effects_rect = Rect(420, 280, 45, 45)
 level_map = [
     "                ",
     "                ",
+    "    E            ",
+    "    T            ",
+    "     T          ",
+    "   T            ",
     "                ",
-    "     E           ",
-    "                ",
-    "                ",
-    "                ",
-    "                ",
+    "  F             ",
     "TTTTTTTTTTTTTTTT",
 ]
 
 tiles = []
 enemies = []
+flag = None
 
 def setup_level():
     for row_index, row in enumerate(level_map):
@@ -42,10 +43,16 @@ def setup_level():
                 tile = Actor('ground', topleft=(x, y))
                 tiles.append(tile)
             if cell == 'E':
-                x = col_index * 64
-                y = row_index * 64
+                x = col_index * TILE_WIDTH
+                y = row_index * TILE_HEIGHT
                 enemy = Actor('enemy', topleft=(x, y))
                 enemies.append(enemy)
+            if cell == 'F':
+                x = col_index * TILE_WIDTH
+                y = row_index * TILE_HEIGHT
+                global flag
+                flag = Actor('exit', topleft=(x, y))
+
 class Player:
     def __init__(self):
         self.player = Actor('frog')
@@ -166,6 +173,9 @@ def draw_game():
         tile.draw()
     for enemy in enemies:
         enemy.draw()
+    flag.draw()
+    if player.player.colliderect(flag):
+        print('You win!')
 
 def on_key_down(key):
     if game_state == 'game' and key == keys.W:
