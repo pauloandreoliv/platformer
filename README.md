@@ -4,6 +4,12 @@
 
 Platformer do Paulo é um jogo de plataforma 2D simples e divertido, construído com Pygame Zero para Python. Controle um sapo através de níveis desafiadores, pulando sobre plataformas, desviando de inimigos e tentando alcançar a bandeira final para vencer!
 
+## Menu Principal
+![Menu Principal](https://i.imgur.com/cOXsZgS.png)
+
+## Tela do Jogo
+![Tela do Jogo](https://i.imgur.com/3TdEJNP.png)
+
 ## Como Jogar
 
 O objetivo é guiar o sapo até a bandeira em cada nível, evitando os inimigos. Você tem um total de 3 vidas.
