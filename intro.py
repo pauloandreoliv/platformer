@@ -5,6 +5,9 @@ WIDTH = 800
 HEIGHT = 400
 TITLE = "Platformer do Paulo"
 
+TILE_WIDTH = 50
+TILE_HEIGHT = 46
+
 game_state = 'intro'
 music_state = 'on'
 effects_state = 'on'
@@ -14,42 +17,100 @@ exit_rect = Rect(WIDTH//2 - 30, 202, 60, 36)
 music_rect = Rect(340, 280, 45, 45)
 effects_rect = Rect(420, 280, 45, 45)
 
+
+level_map = [
+    "                ",
+    "                ",
+    "                ",
+    "   TTTTT         ",
+    "                ",
+    "         TT     ",
+    "      T         ",
+    "                ",
+    "TTTTTTTTTTTTTTTT",
+]
+
+tiles = []
+
+def setup_level():
+    for row_index, row in enumerate(level_map):
+        for col_index, cell in enumerate(row):
+            if cell == 'T':
+                x = col_index * TILE_WIDTH
+                y = row_index * TILE_HEIGHT
+                tile = Actor('ground', topleft=(x, y))
+                tiles.append(tile)
+
 class Player:
     def __init__(self):
         self.player = Actor('frog')
         self.player.x = 50
-        self.player.y = 335
-        self.player.vy = 0
-        self.player.on_ground = False
-        self.speed = 5 
-    
-    def update(self):
-        self.player.vy += 1
-        self.player.y += self.player.vy
-        if self.player.y > 335:
-            self.player.y = 335
-            self.player.vy = 0
-            self.player.on_ground = True
+
+        self.player.y = 200
+        self.vy = 0
+        self.on_ground = False
+        self.speed = 4 
+
+    def set_frog_normal_right(self):
+        self.player.image = 'frog'
+
+    def set_frog_normal_left(self):
+        self.player.image = 'frog_left'
+
+    def update(self, tiles_list):
+        prev_x = self.player.x
+        prev_y = self.player.y
 
         if keyboard.D:
             self.player.x += self.speed
         if keyboard.A:
             self.player.x -= self.speed
 
-        if self.player.x < 0:
-            self.player.x = 10
-        if self.player.x > WIDTH - 10:
-            self.player.x = WIDTH - 10
+        for tile in tiles_list:
+            if self.player.colliderect(tile):
+                self.player.x = prev_x
+                break
+
+        self.vy += 1
+        if self.vy > 10:
+            self.vy = 10
+        self.player.y += self.vy
+
+        self.on_ground = False 
+        for tile in tiles_list:
+            if self.player.colliderect(tile):
+                if self.vy > 0:
+                    self.player.bottom = tile.top
+                    self.on_ground = True
+                    self.vy = 0
+                elif self.vy < 0:
+                    self.player.top = tile.bottom
+                    self.vy = 0
+                break
+
+        if self.player.left < 0:
+            self.player.left = 0
+        if self.player.right > WIDTH:
+            self.player.right = WIDTH
 
     def jump(self):
-        if self.player.on_ground:
-            self.player.vy = -15
-            self.player.on_ground = False
+        if self.on_ground:
+            if effects_state == 'on':
+                sounds.jump.play()
+            self.vy = -15
+            if keyboard.A:
+                self.player.image = 'frog_jump_left'
+                clock.schedule_unique(self.set_frog_normal_left, 0.5)
+            else:
+                self.player.image = 'frog_jump_right'
+                clock.schedule_unique(self.set_frog_normal_right, 0.5)
+            self.on_ground = False
 
 player = Player()
+setup_level()
 def update():
     if game_state == 'game':
-        player.update()
+        player.update(tiles)
 
 def draw():
     screen.clear()
@@ -85,8 +146,8 @@ def draw_menu():
 
 def draw_game():
     player.player.draw()
-    for x in range(0, WIDTH, 50):  
-        screen.blit('ground', (x, 360))
+    for tile in tiles:
+        tile.draw()
 
 def on_key_down(key):
     if game_state == 'game' and key == keys.W:
