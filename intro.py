@@ -24,7 +24,7 @@ level_map = [
     "    E            ",
     "    T            ",
     "     T          ",
-    "   T            ",
+    "   T       E    ",
     "                ",
     "  F             ",
     "TTTTTTTTTTTTTTTT",
@@ -45,7 +45,11 @@ def setup_level():
             if cell == 'E':
                 x = col_index * TILE_WIDTH
                 y = row_index * TILE_HEIGHT
-                enemy = Actor('enemy', topleft=(x, y))
+                enemy = Actor('enemy_right', topleft=(x, y))
+                enemy.direction = 1  # 1 para direita, -1 para esquerda
+                enemy.speed = 0.5
+                enemy.start_x = x - 120
+                enemy.end_x = x + 120
                 enemies.append(enemy)
             if cell == 'F':
                 x = col_index * TILE_WIDTH
@@ -62,6 +66,7 @@ class Player:
         self.vy = 0
         self.on_ground = False
         self.speed = 4 
+        self.player.direction = 'right'
 
     def set_frog_normal_right(self):
         self.player.image = 'frog'
@@ -80,6 +85,7 @@ class Player:
             else:
                 self.player.image = 'frog_jump_right'
             clock.schedule_unique(self.set_frog_normal_right, 0.25)
+            self.player.direction = 'right'
         if keyboard.A:
             self.player.x -= self.speed
             if keyboard.W:
@@ -87,6 +93,7 @@ class Player:
             else:
                 self.player.image = 'frog_jump_left'
             clock.schedule_unique(self.set_frog_normal_left, 0.25)
+            self.player.direction = 'left'
 
         for tile in tiles_list:
             if self.player.colliderect(tile):
@@ -134,6 +141,14 @@ setup_level()
 def update():
     if game_state == 'game':
         player.update(tiles, enemies)
+        for enemy in enemies:
+            enemy.x += enemy.speed * enemy.direction
+            if enemy.right > enemy.end_x or enemy.left < enemy.start_x:
+                enemy.direction *= -1
+                if enemy.direction == 1:
+                    enemy.image = 'enemy_right'
+                else:
+                    enemy.image = 'enemy_left'
 
 def draw():
     screen.clear()
@@ -197,5 +212,37 @@ def on_mouse_down(pos):
             effects_state = 'off'
         else:
             effects_state = 'on'
+
+def animate_frog():
+    if game_state != 'game':
+        return
+    
+    if not keyboard.A and not keyboard.D and player.on_ground:
+        if player.player.direction == 'right':
+            if player.player.image == 'frog':
+                player.player.image = 'frog_closed_eyes_right'
+            else:
+                player.player.image = 'frog'
+        else: 
+            if player.player.image == 'frog_left':
+                player.player.image = 'frog_closed_eyes_left'
+            else:
+                player.player.image = 'frog_left'
+
+def animate_enemies():
+    for enemy in enemies:
+        if enemy.direction == 1:
+            if enemy.image == 'enemy_right':
+                enemy.image = 'enemy_right_closed'
+            else:
+                enemy.image = 'enemy_right'
+        else:
+            if enemy.image == 'enemy_left':
+                enemy.image = 'enemy_left_closed'
+            else:
+                enemy.image = 'enemy_left'
+
+clock.schedule_interval(animate_frog, 0.3)
+clock.schedule_interval(animate_enemies, 0.2)
 
 pgzrun.go()
