@@ -22,15 +22,16 @@ level_map = [
     "                ",
     "                ",
     "                ",
-    "   TTTTT         ",
+    "     E           ",
     "                ",
-    "         TT     ",
-    "      T         ",
+    "                ",
+    "                ",
     "                ",
     "TTTTTTTTTTTTTTTT",
 ]
 
 tiles = []
+enemies = []
 
 def setup_level():
     for row_index, row in enumerate(level_map):
@@ -40,7 +41,11 @@ def setup_level():
                 y = row_index * TILE_HEIGHT
                 tile = Actor('ground', topleft=(x, y))
                 tiles.append(tile)
-
+            if cell == 'E':
+                x = col_index * 64
+                y = row_index * 64
+                enemy = Actor('enemy', topleft=(x, y))
+                enemies.append(enemy)
 class Player:
     def __init__(self):
         self.player = Actor('frog')
@@ -57,14 +62,24 @@ class Player:
     def set_frog_normal_left(self):
         self.player.image = 'frog_left'
 
-    def update(self, tiles_list):
+    def update(self, tiles_list, enemies_list):
         prev_x = self.player.x
         prev_y = self.player.y
 
         if keyboard.D:
             self.player.x += self.speed
+            if keyboard.W:
+                self.player.image = 'frog_rest_right'
+            else:
+                self.player.image = 'frog_jump_right'
+            clock.schedule_unique(self.set_frog_normal_right, 0.25)
         if keyboard.A:
             self.player.x -= self.speed
+            if keyboard.W:
+                self.player.image = 'frog_rest_left'
+            else:
+                self.player.image = 'frog_jump_left'
+            clock.schedule_unique(self.set_frog_normal_left, 0.25)
 
         for tile in tiles_list:
             if self.player.colliderect(tile):
@@ -87,7 +102,14 @@ class Player:
                     self.player.top = tile.bottom
                     self.vy = 0
                 break
-
+    
+        for enemy in enemies_list:
+            if self.player.colliderect(enemy):
+                self.player.x = 50
+                self.player.y = 200
+                self.vy = 0
+                break
+        
         if self.player.left < 0:
             self.player.left = 0
         if self.player.right > WIDTH:
@@ -98,19 +120,13 @@ class Player:
             if effects_state == 'on':
                 sounds.jump.play()
             self.vy = -15
-            if keyboard.A:
-                self.player.image = 'frog_jump_left'
-                clock.schedule_unique(self.set_frog_normal_left, 0.5)
-            else:
-                self.player.image = 'frog_jump_right'
-                clock.schedule_unique(self.set_frog_normal_right, 0.5)
             self.on_ground = False
 
 player = Player()
 setup_level()
 def update():
     if game_state == 'game':
-        player.update(tiles)
+        player.update(tiles, enemies)
 
 def draw():
     screen.clear()
@@ -148,6 +164,8 @@ def draw_game():
     player.player.draw()
     for tile in tiles:
         tile.draw()
+    for enemy in enemies:
+        enemy.draw()
 
 def on_key_down(key):
     if game_state == 'game' and key == keys.W:
